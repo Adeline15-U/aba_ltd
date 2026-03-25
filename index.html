@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABA Ltd — Swap Station Manager</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCqw98w0VWF89IYKXXc0cW2NFVdjsA4n_0",
+  authDomain: "aba-ltd.firebaseapp.com",
+  databaseURL: "https://aba-ltd-default-rtdb.firebaseio.com",
+  projectId: "aba-ltd",
+  storageBucket: "aba-ltd.firebasestorage.app",
+  messagingSenderId: "639333965317",
+  appId: "1:639333965317:web:d375c4c412441b4969c66c"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+</script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F1117;--surface:#1A1D27;--surface2:#22263A;--border:#2E3350;
+  --green:#00D68F;--green-dim:#0A3D2A;--green-lt:#E6FBF4;
+  --blue:#4A9EFF;--blue-dim:#0D2A4A;--blue-lt:#E8F3FF;
+  --amber:#FFB547;--amber-dim:#3D2800;--amber-lt:#FFF4E0;
+  --red:#FF4D6D;--red-dim:#3D0A14;--red-lt:#FFE8ED;
+  --text:#F0F2FF;--muted:#6B7299;--muted2:#3A3F5C;
+  --radius:10px;--radius-lg:16px;
+}
+html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+
+/* ── Login ── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:1rem}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;width:100%;max-width:400px}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:2rem}
+.login-logo-icon{width:42px;height:42px;background:var(--green);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.login-logo-name{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:var(--text)}
+.login-logo-sub{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.login-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:.5rem}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:1.75rem}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem}
+.field label{font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.3px;text-transform:uppercase}
+.field input,.field select,.field textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .15s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green)}
+.field textarea{resize:vertical;min-height:80px}
+.field input[readonly]{opacity:.6;cursor:default}
+.login-btn{width:100%;background:var(--green);color:#000;border:none;border-radius:var(--radius);padding:13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-top:.5rem;transition:opacity .15s}
+.login-btn:hover{opacity:.88}
+.login-err{color:var(--red);font-size:13px;margin-top:.5rem;min-height:18px}
+
+/* ── App layout ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.main{flex:1;overflow-y:auto;background:var(--bg)}
+
+.logo{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border)}
+.logo-row{display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;background:var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.logo-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;line-height:1.2}
+.logo-sub{font-size:10px;color:var(--muted);letter-spacing:.7px;text-transform:uppercase}
+
+.user-badge{margin:.75rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem .875rem;display:flex;align-items:center;gap:8px}
+.ub-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.ub-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ub-role{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+nav{padding:.75rem .75rem;flex:1}
+.nav-section{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:.5rem .625rem;margin-bottom:.25rem;margin-top:.5rem}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:400;transition:all .15s;border:none;background:none;width:100%;text-align:left;font-family:'Plus Jakarta Sans',sans-serif}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(0,214,143,.1);color:var(--green);font-weight:500}
+.nav-item .ni{width:16px;text-align:center;font-size:14px;flex-shrink:0}
+.sidebar-foot{padding:.875rem 1rem;border-top:1px solid var(--border)}
+.conn-row{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.cdot.off{background:var(--amber)}
+.logout-btn{width:100%;margin-top:.5rem;background:none;border:1px solid var(--border);color:var(--muted);border-radius:var(--radius);padding:8px;font-size:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .15s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ── Panels ── */
+.panel{display:none;padding:2rem;animation:fi .2s ease}
+.panel.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ph{margin-bottom:1.75rem}
+.ph-title{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-.3px}
+.ph-sub{font-size:13px;color:var(--muted);margin-top:3px}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi.g::before{background:var(--green)}.kpi.b::before{background:var(--blue)}.kpi.a::before{background:var(--amber)}.kpi.r::before{background:var(--red)}
+.kpi-label{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.kpi-value{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;line-height:1}
+.kpi-value.g{color:var(--green)}.kpi-value.b{color:var(--blue)}.kpi-value.a{color:var(--amber)}.kpi-value.r{color:var(--red)}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ── Cards ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem}
+.card-head{padding:.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600}
+.card-body{padding:1.25rem}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+
+/* ── Form grid ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-grid.c1{grid-template-columns:1fr}
+.form-grid.c3{grid-template-columns:1fr 1fr 1fr}
+.form-section{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem}
+.form-section-title{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:.875rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.divider{height:1px;background:var(--border);margin:1.25rem 0}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:500;border-radius:var(--radius);transition:all .15s;font-size:13px}
+.btn-primary{background:var(--green);color:#000;padding:11px 22px}
+.btn-primary:hover{opacity:.88}
+.btn-sm{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:6px 14px;font-size:12px}
+.btn-sm:hover{border-color:var(--green);color:var(--green)}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid var(--red);padding:6px 14px;font-size:12px}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-full{width:100%;padding:12px}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{border-bottom:1px solid var(--border)}
+th{padding:9px 12px;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:left;white-space:nowrap;background:var(--surface)}
+td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.3px}
+.badge.employee{background:rgba(0,214,143,.12);color:var(--green)}
+.badge.manager{background:rgba(74,158,255,.12);color:var(--blue)}
+.badge.owner{background:rgba(255,181,71,.12);color:var(--amber)}
+.badge.in{background:rgba(0,214,143,.12);color:var(--green)}
+.badge.out{background:rgba(255,77,109,.12);color:var(--red)}
+.badge.expense{background:rgba(255,181,71,.12);color:var(--amber)}
+
+/* ── Station cards ── */
+.station-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+.station-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;cursor:pointer;transition:all .18s}
+.station-card:hover{border-color:var(--green);background:var(--surface2)}
+.station-card.active{border-color:var(--green);background:rgba(0,214,143,.06)}
+.sc-num{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--green)}
+.sc-label{font-size:12px;color:var(--muted);margin-top:2px}
+.sc-swaps{font-size:13px;font-weight:500;margin-top:.75rem}
+.sc-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px}
+
+/* ── Misc ── */
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--muted)}
+.empty-icon{font-size:32px;margin-bottom:.75rem;opacity:.4}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px 18px;border-radius:var(--radius);font-size:13px;z-index:9999;transform:translateY(60px);opacity:0;transition:all .3s ease;pointer-events:none;max-width:340px}
+.toast.show{transform:none;opacity:1}
+.toast.success{border-color:var(--green);color:var(--green)}
+.toast.error{border-color:var(--red);color:var(--red)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin-bottom:1.25rem}
+.filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+.filter-row select,.filter-row input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text);outline:none}
+.filter-row select:focus,.filter-row input:focus{border-color:var(--green)}
+.hamburger{display:none;position:fixed;top:14px;right:16px;z-index:200;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;font-size:18px;cursor:pointer}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+
+@media(max-width:768px){
+  .sidebar{position:fixed;top:0;left:0;height:100vh;z-index:100;transform:translateX(-100%);transition:transform .3s}
+  .sidebar.open{transform:none}
+  .hamburger{display:block}
+  .mob-overlay.show{display:block}
+  .main{margin-left:0}
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:.75rem}
+  .two-col,.three-col,.form-grid,.form-grid.c3{grid-template-columns:1fr}
+  .panel{padding:1rem;padding-top:3.5rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-icon">⚡</div>
+        <div>
+          <div class="login-logo-name">ABA Ltd</div>
+          <div class="login-logo-sub">Swap Station Manager</div>
+        </div>
+      </div>
+      <div class="login-title">Welcome back</div>
+      <div class="login-sub">Sign in to your account to continue</div>
+      <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <div class="login-err" id="login-err"></div>
+      <button class="login-btn" onclick="doLogin()">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app-screen" style="display:none">
+<button class="hamburger" onclick="toggleSidebar()">☰</button>
+<div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+<div class="app">
+<aside class="sidebar" id="sidebar">
+  <div class="logo">
+    <div class="logo-row">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-name">ABA Ltd</div>
+        <div class="logo-sub">Swap Station Manager</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="user-badge">
+    <div class="ub-avatar" id="ub-avatar"></div>
+    <div>
+      <div class="ub-name" id="ub-name">—</div>
+      <div class="ub-role" id="ub-role">—</div>
+    </div>
+  </div>
+
+  <nav id="sidebar-nav">
+    <div class="nav-section">Main</div>
+    <button class="nav-item active" onclick="go('dashboard')"><span class="ni">▦</span> Dashboard</button>
+    <button class="nav-item" onclick="go('swap-form')"><span class="ni">🔋</span> New Swap</button>
+    <button class="nav-item" onclick="go('swaps')"><span class="ni">≡</span> Swap Records</button>
+    <div class="nav-section" id="nav-mgr-section" style="display:none">Manager</div>
+    <button class="nav-item" id="nav-expenses" style="display:none" onclick="go('expenses')"><span class="ni">💰</span> Expenses</button>
+    <button class="nav-item" id="nav-reports" style="display:none" onclick="go('reports')"><span class="ni">📊</span> Reports</button>
+    <div class="nav-section" id="nav-admin-section" style="display:none">Admin</div>
+    <button class="nav-item" id="nav-users" style="display:none" onclick="go('users')"><span class="ni">👥</span> Users</button>
+    <button class="nav-item" id="nav-audit" style="display:none" onclick="go('audit')"><span class="ni">🕵</span> Audit Log</button>
+  </nav>
+
+  <div class="sidebar-foot">
+    <div class="conn-row"><span class="cdot" id="cdot"></span><span id="conn-lbl">Connecting…</span></div>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- ════ DASHBOARD ════ -->
+<div class="panel active" id="panel-dashboard">
+  <div class="ph"><div class="ph-title">Dashboard</div><div class="ph-sub" id="dash-date"></div></div>
+  <div class="kpi-grid">
+    <div class="kpi g"><div class="kpi-label">Today's Swaps</div><div class="kpi-value g" id="k-today">0</div><div class="kpi-sub">All stations</div></div>
+    <div class="kpi b"><div class="kpi-label">Total Swaps</div><div class="kpi-value b" id="k-total">0</div><div class="kpi-sub">All time</div></div>
+    <div class="kpi a"><div class="kpi-label">Revenue Today</div><div class="kpi-value a" id="k-rev">0</div><div class="kpi-sub">Swap cost collected</div></div>
+    <div class="kpi r"><div class="kpi-label">Active Stations</div><div class="kpi-value r" id="k-stations">0</div><div class="kpi-sub">With swaps today</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head"><span class="card-title">Recent Swaps</span><button class="btn btn-sm" onclick="go('swaps')">View all</button></div>
+      <div id="dash-recent" style="padding:0"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Stations Overview</span></div>
+      <div class="card-body"><div class="station-grid" id="dash-stations"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ NEW SWAP ════ -->
+<div class="panel" id="panel-swap-form">
+  <div class="ph"><div class="ph-title">New Battery Swap</div><div class="ph-sub">Record a battery swap transaction</div></div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">Swap Details</span></div>
+    <div class="card-body">
+
+      <div class="form-section">
+        <div class="form-section-title">General Information</div>
+        <div class="form-grid">
+          <div class="field"><label>Swap Date & Time</label><input type="datetime-local" id="sf-date"></div>
+          <div class="field"><label>Country</label><input type="text" id="sf-country" placeholder="e.g. Rwanda"></div>
+          <div class="field"><label>Station</label><select id="sf-station"></select></div>
+          <div class="field"><label>Pay Method</label>
+            <select id="sf-pay-method">
+              <option value="">— Select —</option>
+              <option>Mobile Money</option><option>Cash</option><option>Wallet</option><option>Card</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Vehicle & Customer</div>
+        <div class="form-grid">
+          <div class="field"><label>Vehicle Reg No</label><input type="text" id="sf-reg" placeholder="e.g. RAD 123A"></div>
+          <div class="field"><label>Vehicle Model</label><input type="text" id="sf-model" placeholder="e.g. Honda CG125"></div>
+          <div class="field"><label>Customer Name</label><input type="text" id="sf-customer" placeholder="Full name"></div>
+          <div class="field"><label>Swap Agent / Customer Wallet</label><input type="text" id="sf-wallet" placeholder="Wallet ID or agent name"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Incoming Battery (Battery being returned)</div>
+        <div class="form-grid c3">
+          <div class="field"><label>Serial No</label><input type="text" id="sf-in-serial" placeholder="Serial number"></div>
+          <div class="field"><label>OEM</label><input type="text" id="sf-in-oem" placeholder="Manufacturer"></div>
+          <div class="field"><label>Scan Code</label><input type="text" id="sf-in-scan" placeholder="Scan / QR code"></div>
+          <div class="field"><label>Previous SOC (%)</label><input type="number" id="sf-in-prev-soc" min="0" max="100" placeholder="e.g. 15"></div>
+          <div class="field"><label>Current SOC (%)</label><input type="number" id="sf-in-curr-soc" min="0" max="100" placeholder="e.g. 20"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Outgoing Battery (Battery being given out)</div>
+        <div class="form-grid c3">
+          <div class="field"><label>Serial No</label><input type="text" id="sf-out-serial" placeholder="Serial number"></div>
+          <div class="field"><label>OEM</label><input type="text" id="sf-out-oem" placeholder="Manufacturer"></div>
+          <div class="field"><label>Scan Code</label><input type="text" id="sf-out-scan" placeholder="Scan / QR code"></div>
+          <div class="field"><label>Current SOC (%)</label><input type="number" id="sf-out-curr-soc" min="0" max="100" placeholder="e.g. 95"></div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Transaction & Billing</div>
+        <div class="form-grid c3">
+          <div class="field"><label>Transaction ID</label><input type="text" id="sf-txn-id" placeholder="Transaction reference"></div>
+          <div class="field"><label>Discount Amount / SOC</label><input type="number" id="sf-discount" placeholder="0"></div>
+          <div class="field"><label>Net SOC</label><input type="number" id="sf-net-soc" placeholder="Auto or manual"></div>
+          <div class="field"><label>Billable SOC</label><input type="number" id="sf-billable-soc" placeholder="SOC to bill"></div>
+          <div class="field"><label>Swap Cost (RWF)</label><input type="number" id="sf-swap-cost" placeholder="e.g. 2000"></div>
+          <div class="field"><label>Station SOC</label><input type="number" id="sf-station-soc" placeholder="Station SOC level"></div>
+        </div>
+        <div class="form-grid" style="margin-top:1rem">
+          <div class="field"><label>Station Cost (RWF)</label><input type="number" id="sf-station-cost" placeholder="Cost at station"></div>
+          <div class="field"><label>Swap Performed By</label><input type="text" id="sf-performed-by" placeholder="Employee name" readonly></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" onclick="saveSwap()">💾 &nbsp;Save Swap Record</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ SWAP RECORDS ════ -->
+<div class="panel" id="panel-swaps">
+  <div class="ph" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+    <div><div class="ph-title">Swap Records</div><div class="ph-sub">All battery swap transactions</div></div>
+    <button class="btn btn-sm" id="export-swaps-btn" onclick="exportSwaps()" style="display:none">⬇ Export CSV</button>
+  </div>
+  <div class="filter-row">
+    <select id="sw-filter-station" onchange="renderSwaps()"><option value="">All Stations</option></select>
+    <input type="date" id="sw-date-from" onchange="renderSwaps()" placeholder="From">
+    <input type="date" id="sw-date-to" onchange="renderSwaps()" placeholder="To">
+    <input type="text" id="sw-search" oninput="renderSwaps()" placeholder="Search reg/customer…">
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Station</th><th>Customer</th><th>Reg No</th><th>In Battery</th><th>Out Battery</th><th>Swap Cost</th><th>Pay Method</th><th>Performed By</th><th id="del-col-head"></th></tr></thead>
+        <tbody id="swaps-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════ EXPENSES ════ -->
+<div class="panel" id="panel-expenses">
+  <div class="ph"><div class="ph-title">Expenses</div><div class="ph-sub">Track operational costs per station</div></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head"><span class="card-title">Add Expense</span></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field"><label>Date</label><input type="date" id="exp-date"></div>
+          <div class="field"><label>Station</label><select id="exp-station"><option value="all">All Stations (Global)</option></select></div>
+          <div class="field"><label>Category</label>
+            <select id="exp-cat">
+              <option value="">— Select —</option>
+              <option>Electricity</option><option>Cleaning</option><option>Salaries</option>
+              <option>Maintenance</option><option>Rent</option><option>Internet</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Amount (RWF)</label><input type="number" id="exp-amount" placeholder="e.g. 50000"></div>
+        </div>
+        <div class="field" style="margin-top:.5rem"><label>Description</label><textarea id="exp-desc" placeholder="Details…" style="min-height:60px"></textarea></div>
+        <button class="btn btn-primary btn-full" style="margin-top:1rem" onclick="saveExpense()">💾 &nbsp;Save Expense</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Recent Expenses</span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Station</th><th>Category</th><th>Amount</th><th>By</th><th></th></tr></thead>
+          <tbody id="exp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ REPORTS ════ -->
+<div class="panel" id="panel-reports">
+  <div class="ph"><div class="ph-title">Reports</div><div class="ph-sub">Financial summary across all stations</div></div>
+  <div class="filter-row">
+    <select id="rpt-period" onchange="renderReports()">
+      <option value="daily">Daily</option><option value="weekly">Weekly</option>
+      <option value="monthly" selected>Monthly</option><option value="all">All Time</option>
+    </select>
+    <select id="rpt-station" onchange="renderReports()"><option value="">All Stations</option></select>
+  </div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi g"><div class="kpi-label">Total Revenue</div><div class="kpi-value g" id="rpt-rev">0 RWF</div><div class="kpi-sub">Swap costs collected</div></div>
+    <div class="kpi r"><div class="kpi-label">Total Expenses</div><div class="kpi-value r" id="rpt-exp">0 RWF</div><div class="kpi-sub">All costs</div></div>
+    <div class="kpi a"><div class="kpi-label">Net Profit</div><div class="kpi-value a" id="rpt-profit">0 RWF</div><div class="kpi-sub">Revenue − Expenses</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head"><span class="card-title">Swaps by Station</span></div>
+      <div class="card-body" id="rpt-station-chart"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">Expenses by Category</span></div>
+      <div class="card-body" id="rpt-expense-chart"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">Period Summary</span><button class="btn btn-sm" onclick="exportReport()">⬇ Export CSV</button></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Period</th><th>Station</th><th>Swaps</th><th>Revenue (RWF)</th><th>Expenses (RWF)</th><th>Net Profit (RWF)</th></tr></thead>
+        <tbody id="rpt-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ════ USERS ════ -->
+<div class="panel" id="panel-users">
+  <div class="ph"><div class="ph-title">User Management</div><div class="ph-sub">Manage all system users</div></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-head"><span class="card-title">Add New User</span></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field"><label>Full Name</label><input type="text" id="u-name" placeholder="Full name"></div>
+          <div class="field"><label>Email</label><input type="email" id="u-email" placeholder="user@example.com"></div>
+          <div class="field"><label>Password</label><input type="password" id="u-pass" placeholder="Min 6 characters"></div>
+          <div class="field"><label>Role</label>
+            <select id="u-role">
+              <option value="employee">Employee</option>
+              <option value="manager">Manager</option>
+              <option value="owner">Owner</option>
+            </select>
+          </div>
+          <div class="field"><label>Assigned Station</label><select id="u-station"></select></div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:1rem" onclick="createUser()">➕ &nbsp;Create User</button>
+        <div class="login-err" id="user-err"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">All Users</span></div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Station</th><th>Last Login</th><th></th></tr></thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ AUDIT LOG ════ -->
+<div class="panel" id="panel-audit">
+  <div class="ph"><div class="ph-title">Audit Log</div><div class="ph-sub">Track who did what and when</div></div>
+  <div class="filter-row">
+    <input type="date" id="audit-from" onchange="renderAudit()">
+    <input type="date" id="audit-to" onchange="renderAudit()">
+    <input type="text" id="audit-search" oninput="renderAudit()" placeholder="Search user/action…">
+    <button class="btn btn-sm" onclick="exportAudit()">⬇ Export CSV</button>
+  </div>
+  <div class="card">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Timestamp</th><th>User</th><th>Role</th><th>Action</th><th>Details</th><th>Station</th></tr></thead>
+        <tbody id="audit-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem">
+      <button class="btn btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modal-confirm-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let currentUser=null, userProfile=null;
+const STATIONS=Array.from({length:10},(_,i)=>i+1);
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-err');
+  err.textContent='';
+  if(!email||!pass){err.textContent='Please enter email and password';return;}
+  auth.signInWithEmailAndPassword(email,pass)
+    .then(cred=>{
+      // log login
+      db.ref('audit').push({
+        timestamp:new Date().toISOString(),
+        userId:cred.user.uid,
+        action:'LOGIN',
+        details:'User signed in',
+        station:''
+      });
+    })
+    .catch(e=>{err.textContent='Invalid email or password';});
+}
+
+function doLogout(){
+  if(currentUser){
+    db.ref('audit').push({
+      timestamp:new Date().toISOString(),
+      userId:currentUser.uid,
+      userName:userProfile?.name||currentUser.email,
+      userRole:userProfile?.role||'',
+      action:'LOGOUT',
+      details:'User signed out',
+      station:''
+    });
+  }
+  auth.signOut();
+}
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    currentUser=user;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    loadUserProfile(user.uid);
+  } else {
+    currentUser=null;userProfile=null;
+    document.getElementById('login-screen').style.display='block';
+    document.getElementById('app-screen').style.display='none';
+  }
+});
+
+function loadUserProfile(uid){
+  db.ref('users/'+uid).on('value',snap=>{
+    const data=snap.val();
+    if(!data){
+      // First owner setup — if no users exist yet, make this user an owner
+      db.ref('users').once('value',s=>{
+        if(!s.val()){
+          const profile={name:currentUser.email.split('@')[0],email:currentUser.email,role:'owner',station:'all',createdAt:new Date().toISOString()};
+          db.ref('users/'+uid).set(profile);
+        }
+      });
+      return;
+    }
+    userProfile=data;
+    setupUI(data);
+    populateStationSelects();
+    go('dashboard');
+  });
+}
+
+function setupUI(profile){
+  // User badge
+  const initials=(profile.name||'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const colors={employee:'#00D68F',manager:'#4A9EFF',owner:'#FFB547'};
+  const col=colors[profile.role]||'#6B7299';
+  document.getElementById('ub-avatar').style.background=col+'22';
+  document.getElementById('ub-avatar').style.color=col;
+  document.getElementById('ub-avatar').textContent=initials;
+  document.getElementById('ub-name').textContent=profile.name||profile.email;
+  document.getElementById('ub-role').textContent=profile.role||'employee';
+  // Nav visibility
+  const isMgr=profile.role==='manager'||profile.role==='owner';
+  const isOwner=profile.role==='owner';
+  document.getElementById('nav-mgr-section').style.display=isMgr?'':'none';
+  document.getElementById('nav-expenses').style.display=isMgr?'':'none';
+  document.getElementById('nav-reports').style.display=isMgr?'':'none';
+  document.getElementById('nav-admin-section').style.display=isOwner?'':'none';
+  document.getElementById('nav-users').style.display=isOwner?'':'none';
+  document.getElementById('nav-audit').style.display=isOwner?'':'none';
+  document.getElementById('export-swaps-btn').style.display=isOwner?'':'none';
+  document.getElementById('del-col-head').textContent=isOwner?'':'';
+  // Set performed-by
+  document.getElementById('sf-performed-by').value=profile.name||profile.email;
+  // Date defaults
+  const now=new Date();
+  document.getElementById('sf-date').value=now.toISOString().slice(0,16);
+  document.getElementById('exp-date').value=now.toISOString().split('T')[0];
+  document.getElementById('dash-date').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+function populateStationSelects(){
+  const selects=['sf-station','sw-filter-station','exp-station','rpt-station','u-station'];
+  selects.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const isFilter=id.includes('filter')||id.includes('rpt');
+    const isExp=id==='exp-station';
+    const isUser=id==='u-station';
+    // Keep first option
+    while(el.options.length>1)el.remove(1);
+    if(isUser){el.options[0].text='All Stations';el.options[0].value='all';}
+    STATIONS.forEach(n=>{
+      const opt=document.createElement('option');
+      opt.value=n;opt.text='Station '+n;
+      // Employee can only see their own station
+      if(userProfile?.role==='employee'&&userProfile?.station&&userProfile.station!=='all'){
+        if(String(n)===String(userProfile.station)){el.appendChild(opt);}
+      } else {el.appendChild(opt);}
+    });
+    // Pre-select employee's station
+    if(userProfile?.role==='employee'&&userProfile?.station&&userProfile.station!=='all'){
+      el.value=userProfile.station;
+      if(id==='sf-station')el.disabled=true;
+    }
+  });
+}
+
+// ─── Navigation ──────────────────────────────────────────────────────────────
+function go(p){
+  document.querySelectorAll('.panel').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  document.getElementById('panel-'+p).classList.add('active');
+  const pages=['dashboard','swap-form','swaps','expenses','reports','users','audit'];
+  pages.forEach((id,i)=>{if(id===p)document.querySelectorAll('.nav-item')[i].classList.add('active');});
+  closeSidebar();
+  if(p==='dashboard')renderDashboard();
+  if(p==='swaps')renderSwaps();
+  if(p==='expenses')renderExpenses();
+  if(p==='reports')renderReports();
+  if(p==='users')renderUsers();
+  if(p==='audit')renderAudit();
+}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('mob-overlay').classList.toggle('show');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('mob-overlay').classList.remove('show');}
+
+// ─── Firebase connection ──────────────────────────────────────────────────────
+db.ref('.info/connected').on('value',snap=>{
+  const dot=document.getElementById('cdot'),lbl=document.getElementById('conn-lbl');
+  if(snap.val()){dot.className='cdot';lbl.textContent='Connected';}
+  else{dot.className='cdot off';lbl.textContent='Reconnecting…';}
+});
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function fmtN(n){return Math.round(n).toLocaleString();}
+function fmtRWF(n){return Math.round(n).toLocaleString()+' RWF';}
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'—';}
+function toast(msg,type='success'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast '+type+' show';
+  setTimeout(()=>el.className='toast',3000);
+}
+function logAudit(action,details,station=''){
+  if(!currentUser||!userProfile)return;
+  db.ref('audit').push({
+    timestamp:new Date().toISOString(),
+    userId:currentUser.uid,
+    userName:userProfile.name||currentUser.email,
+    userRole:userProfile.role,
+    action,details,
+    station:String(station)
+  });
+}
+
+// ─── Swap functions ───────────────────────────────────────────────────────────
+function saveSwap(){
+  if(!currentUser||!userProfile)return;
+  const station=document.getElementById('sf-station').value;
+  if(!station){toast('Please select a station','error');return;}
+  const swap={
+    timestamp:new Date().toISOString(),
+    swapDate:document.getElementById('sf-date').value,
+    country:document.getElementById('sf-country').value,
+    station:station,
+    payMethod:document.getElementById('sf-pay-method').value,
+    vehicleReg:document.getElementById('sf-reg').value,
+    vehicleModel:document.getElementById('sf-model').value,
+    customerName:document.getElementById('sf-customer').value,
+    swapAgentWallet:document.getElementById('sf-wallet').value,
+    inSerial:document.getElementById('sf-in-serial').value,
+    inOEM:document.getElementById('sf-in-oem').value,
+    inScan:document.getElementById('sf-in-scan').value,
+    inPrevSOC:document.getElementById('sf-in-prev-soc').value,
+    inCurrSOC:document.getElementById('sf-in-curr-soc').value,
+    outSerial:document.getElementById('sf-out-serial').value,
+    outOEM:document.getElementById('sf-out-oem').value,
+    outScan:document.getElementById('sf-out-scan').value,
+    outCurrSOC:document.getElementById('sf-out-curr-soc').value,
+    transactionId:document.getElementById('sf-txn-id').value,
+    discount:document.getElementById('sf-discount').value,
+    netSOC:document.getElementById('sf-net-soc').value,
+    billableSOC:document.getElementById('sf-billable-soc').value,
+    swapCost:parseFloat(document.getElementById('sf-swap-cost').value)||0,
+    stationSOC:document.getElementById('sf-station-soc').value,
+    stationCost:parseFloat(document.getElementById('sf-station-cost').value)||0,
+    performedBy:document.getElementById('sf-performed-by').value,
+    recordedBy:currentUser.uid,
+    recordedByName:userProfile.name||currentUser.email
+  };
+  db.ref('swaps').push(swap).then(()=>{
+    logAudit('SWAP_ADDED','Swap recorded for '+swap.vehicleReg+' at Station '+station,station);
+    toast('✓ Swap saved successfully!');
+    // Clear form fields (keep station and performed-by)
+    ['sf-reg','sf-model','sf-customer','sf-wallet','sf-in-serial','sf-in-oem','sf-in-scan','sf-in-prev-soc','sf-in-curr-soc','sf-out-serial','sf-out-oem','sf-out-scan','sf-out-curr-soc','sf-txn-id','sf-discount','sf-net-soc','sf-billable-soc','sf-swap-cost','sf-station-soc','sf-station-cost'].forEach(id=>{document.getElementById(id).value='';});
+    setTimeout(()=>go('dashboard'),800);
+  }).catch(e=>toast('Error saving swap','error'));
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const today=new Date().toISOString().split('T')[0];
+  db.ref('swaps').once('value',snap=>{
+    const data=snap.val()||{};
+    let allSwaps=Object.values(data);
+    // Filter by station for employees
+    if(userProfile?.role==='employee'&&userProfile?.station&&userProfile.station!=='all'){
+      allSwaps=allSwaps.filter(s=>String(s.station)===String(userProfile.station));
+    }
+    const todaySwaps=allSwaps.filter(s=>s.swapDate&&s.swapDate.startsWith(today));
+    const todayRev=todaySwaps.reduce((a,s)=>a+(parseFloat(s.swapCost)||0),0);
+    const activeStations=new Set(todaySwaps.map(s=>s.station)).size;
+    document.getElementById('k-today').textContent=fmtN(todaySwaps.length);
+    document.getElementById('k-total').textContent=fmtN(allSwaps.length);
+    document.getElementById('k-rev').textContent=fmtRWF(todayRev);
+    document.getElementById('k-stations').textContent=activeStations;
+    // Recent swaps
+    const recent=allSwaps.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,6);
+    const rl=document.getElementById('dash-recent');
+    if(!recent.length){rl.innerHTML='<div class="empty"><div class="empty-icon">🔋</div><p>No swaps recorded yet</p></div>';return;}
+    rl.innerHTML='<table style="width:100%"><thead><tr><th>Time</th><th>Station</th><th>Customer</th><th>Cost</th></tr></thead><tbody>'+
+      recent.map(s=>`<tr>
+        <td style="color:var(--muted);font-size:12px">${s.swapDate?s.swapDate.slice(0,16).replace('T',' '):''}</td>
+        <td><span style="background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:4px;font-size:11px">STN ${esc(s.station)}</span></td>
+        <td style="font-weight:500">${esc(s.customerName)}</td>
+        <td style="color:var(--amber);font-weight:600">${fmtRWF(s.swapCost||0)}</td>
+      </tr>`).join('')+'</tbody></table>';
+    // Station cards
+    const stationMap={};
+    allSwaps.forEach(s=>{const k=s.station;if(!stationMap[k])stationMap[k]=0;stationMap[k]++;});
+    const sg=document.getElementById('dash-stations');
+    const visStations=userProfile?.role==='employee'&&userProfile.station!=='all'?[userProfile.station]:STATIONS;
+    sg.innerHTML=visStations.map(n=>`
+      <div class="station-card">
+        <div class="sc-num">${n}</div>
+        <div class="sc-label">Station ${n}</div>
+        <div class="sc-swaps"><span class="sc-dot"></span>${stationMap[n]||0} swaps total</div>
+      </div>`).join('');
+  });
+}
+
+// ─── Swap Records ─────────────────────────────────────────────────────────────
+function renderSwaps(){
+  const stationF=document.getElementById('sw-filter-station').value;
+  const dateFrom=document.getElementById('sw-date-from').value;
+  const dateTo=document.getElementById('sw-date-to').value;
+  const search=document.getElementById('sw-search').value.toLowerCase();
+  db.ref('swaps').once('value',snap=>{
+    let list=Object.entries(snap.val()||{}).map(([id,v])=>({...v,_id:id}));
+    // Role filter
+    if(userProfile?.role==='employee'&&userProfile?.station&&userProfile.station!=='all'){
+      list=list.filter(s=>String(s.station)===String(userProfile.station));
+    }
+    if(stationF)list=list.filter(s=>String(s.station)===stationF);
+    if(dateFrom)list=list.filter(s=>s.swapDate&&s.swapDate>=dateFrom);
+    if(dateTo)list=list.filter(s=>s.swapDate&&s.swapDate<=dateTo+'T23:59');
+    if(search)list=list.filter(s=>(s.customerName||'').toLowerCase().includes(search)||(s.vehicleReg||'').toLowerCase().includes(search));
+    list.sort((a,b)=>new Date(b.timestamp||0)-new Date(a.timestamp||0));
+    const tbody=document.getElementById('swaps-tbody');
+    const isOwner=userProfile?.role==='owner';
+    if(!list.length){tbody.innerHTML=`<tr><td colspan="10" class="empty"><div class="empty-icon">🔋</div><p>No records found</p></td></tr>`;return;}
+    tbody.innerHTML=list.map(s=>`<tr>
+      <td style="font-size:12px;color:var(--muted);white-space:nowrap">${(s.swapDate||'').slice(0,16).replace('T',' ')}</td>
+      <td><span style="background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:4px;font-size:11px">STN ${esc(s.station)}</span></td>
+      <td style="font-weight:500">${esc(s.customerName)}</td>
+      <td style="font-family:monospace;font-size:12px">${esc(s.vehicleReg)}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(s.inSerial)}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(s.outSerial)}</td>
+      <td style="color:var(--amber);font-weight:600">${fmtRWF(s.swapCost||0)}</td>
+      <td style="font-size:12px">${esc(s.payMethod)}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(s.performedBy)}</td>
+      <td>${isOwner?`<button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="deleteSwap('${s._id}','${esc(s.vehicleReg)}')">✕</button>`:''}</td>
+    </tr>`).join('');
+  });
+}
+
+function deleteSwap(id,label){
+  showModal('Delete Swap',`Are you sure you want to delete the swap record for <strong>${label}</strong>? This cannot be undone.`,()=>{
+    db.ref('swaps/'+id).remove().then(()=>{
+      logAudit('SWAP_DELETED','Deleted swap record '+label);
+      toast('Swap deleted');renderSwaps();
+    });
+  });
+}
+
+// ─── Expenses ─────────────────────────────────────────────────────────────────
+function saveExpense(){
+  const date=document.getElementById('exp-date').value;
+  const station=document.getElementById('exp-station').value;
+  const cat=document.getElementById('exp-cat').value;
+  const amount=parseFloat(document.getElementById('exp-amount').value)||0;
+  const desc=document.getElementById('exp-desc').value.trim();
+  if(!date||!cat||!amount){toast('Please fill in date, category and amount','error');return;}
+  db.ref('expenses').push({
+    timestamp:new Date().toISOString(),
+    date,station,category:cat,amount,description:desc,
+    recordedBy:currentUser.uid,
+    recordedByName:userProfile?.name||currentUser.email
+  }).then(()=>{
+    logAudit('EXPENSE_ADDED',`${cat} — ${fmtRWF(amount)}`,station);
+    toast('✓ Expense saved!');
+    document.getElementById('exp-amount').value='';
+    document.getElementById('exp-desc').value='';
+    renderExpenses();
+  }).catch(()=>toast('Error saving expense','error'));
+}
+
+function renderExpenses(){
+  db.ref('expenses').orderByChild('date').once('value',snap=>{
+    const list=Object.entries(snap.val()||{}).map(([id,v])=>({...v,_id:id})).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,20);
+    const tbody=document.getElementById('exp-tbody');
+    const isOwner=userProfile?.role==='owner';
+    if(!list.length){tbody.innerHTML=`<tr><td colspan="6" class="empty">No expenses yet</td></tr>`;return;}
+    tbody.innerHTML=list.map(e=>`<tr>
+      <td style="font-size:12px;color:var(--muted)">${e.date}</td>
+      <td style="font-size:12px">${e.station==='all'?'Global':'STN '+esc(e.station)}</td>
+      <td><span class="badge expense">${esc(e.category)}</span></td>
+      <td style="color:var(--red);font-weight:600">${fmtRWF(e.amount)}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(e.recordedByName)}</td>
+      <td>${isOwner?`<button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="deleteExpense('${e._id}')">✕</button>`:''}</td>
+    </tr>`).join('');
+  });
+}
+
+function deleteExpense(id){
+  showModal('Delete Expense','Are you sure?',()=>{
+    db.ref('expenses/'+id).remove().then(()=>{logAudit('EXPENSE_DELETED','Deleted expense');toast('Deleted');renderExpenses();});
+  });
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+function renderReports(){
+  const period=document.getElementById('rpt-period').value;
+  const stationF=document.getElementById('rpt-station').value;
+  Promise.all([db.ref('swaps').once('value'),db.ref('expenses').once('value')]).then(([swapSnap,expSnap])=>{
+    let swaps=Object.values(swapSnap.val()||{});
+    let exps=Object.values(expSnap.val()||{});
+    if(stationF){swaps=swaps.filter(s=>String(s.station)===stationF);exps=exps.filter(e=>e.station===stationF||e.station==='all');}
+    const totalRev=swaps.reduce((a,s)=>a+(parseFloat(s.swapCost)||0),0);
+    const totalExp=exps.reduce((a,e)=>a+(parseFloat(e.amount)||0),0);
+    document.getElementById('rpt-rev').textContent=fmtRWF(totalRev);
+    document.getElementById('rpt-exp').textContent=fmtRWF(totalExp);
+    const profit=totalRev-totalExp;
+    const profEl=document.getElementById('rpt-profit');
+    profEl.textContent=fmtRWF(profit);
+    profEl.className='kpi-value '+(profit>=0?'g':'r');
+    // Station bar chart
+    const stMap={};
+    swaps.forEach(s=>{const k='STN '+s.station;if(!stMap[k])stMap[k]=0;stMap[k]+=(parseFloat(s.swapCost)||0);});
+    const maxS=Math.max(...Object.values(stMap),1);
+    document.getElementById('rpt-station-chart').innerHTML=Object.entries(stMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:500;min-width:60px;color:var(--muted)">${k}</div>
+        <div style="flex:1;background:var(--surface2);border-radius:4px;height:24px;overflow:hidden">
+          <div style="height:100%;width:${Math.round(v/maxS*100)}%;background:var(--green);border-radius:4px;display:flex;align-items:center;padding-left:8px">
+            <span style="font-size:11px;font-weight:600;color:#000">${fmtRWF(v)}</span>
+          </div>
+        </div>
+      </div>`).join('')||'<p style="color:var(--muted);font-size:13px">No data</p>';
+    // Expense category chart
+    const catMap={};
+    exps.forEach(e=>{if(!catMap[e.category])catMap[e.category]=0;catMap[e.category]+=(parseFloat(e.amount)||0);});
+    const maxC=Math.max(...Object.values(catMap),1);
+    document.getElementById('rpt-expense-chart').innerHTML=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:500;min-width:80px;color:var(--muted)">${k}</div>
+        <div style="flex:1;background:var(--surface2);border-radius:4px;height:24px;overflow:hidden">
+          <div style="height:100%;width:${Math.round(v/maxC*100)}%;background:var(--red);border-radius:4px;display:flex;align-items:center;padding-left:8px">
+            <span style="font-size:11px;font-weight:600;color:#fff">${fmtRWF(v)}</span>
+          </div>
+        </div>
+      </div>`).join('')||'<p style="color:var(--muted);font-size:13px">No expenses</p>';
+    // Summary table
+    const getPKey=s=>{
+      const d=s.swapDate||s.date||s.timestamp||'';
+      if(period==='all')return 'All Time';
+      if(period==='monthly')return d.slice(0,7);
+      if(period==='weekly'){const dt=new Date(d);dt.setDate(dt.getDate()-dt.getDay());return dt.toISOString().split('T')[0];}
+      return d.split('T')[0];
+    };
+    const rows={};
+    swaps.forEach(s=>{const k=getPKey(s)+'|STN '+s.station;if(!rows[k])rows[k]={period:getPKey(s),station:'STN '+s.station,swaps:0,rev:0,exp:0};rows[k].swaps++;rows[k].rev+=(parseFloat(s.swapCost)||0);});
+    exps.forEach(e=>{const stn=e.station==='all'?'Global':'STN '+e.station;const k=getPKey(e)+'|'+stn;if(!rows[k])rows[k]={period:getPKey(e),station:stn,swaps:0,rev:0,exp:0};rows[k].exp+=(parseFloat(e.amount)||0);});
+    const sorted=Object.values(rows).sort((a,b)=>b.period.localeCompare(a.period));
+    document.getElementById('rpt-tbody').innerHTML=sorted.slice(0,30).map(r=>{
+      const profit=r.rev-r.exp;
+      return`<tr>
+        <td style="font-size:12px;color:var(--muted)">${r.period}</td>
+        <td><span style="background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:4px;font-size:11px">${r.station}</span></td>
+        <td style="font-weight:600">${r.swaps}</td>
+        <td style="color:var(--green);font-weight:600">${fmtRWF(r.rev)}</td>
+        <td style="color:var(--red)">${fmtRWF(r.exp)}</td>
+        <td style="font-weight:700;color:${profit>=0?'var(--green)':'var(--red)'}">${profit>=0?'+':''}${fmtRWF(profit)}</td>
+      </tr>`;
+    }).join('')||'<tr><td colspan="6" class="empty">No data</td></tr>';
+  });
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+function createUser(){
+  const name=document.getElementById('u-name').value.trim();
+  const email=document.getElementById('u-email').value.trim();
+  const pass=document.getElementById('u-pass').value;
+  const role=document.getElementById('u-role').value;
+  const station=document.getElementById('u-station').value;
+  const err=document.getElementById('user-err');
+  err.textContent='';
+  if(!name||!email||!pass){err.textContent='Please fill in all fields';return;}
+  if(pass.length<6){err.textContent='Password must be at least 6 characters';return;}
+  // Create with secondary auth instance to avoid logging out current user
+  const secondaryApp=firebase.initializeApp(firebaseConfig,'Secondary'+Date.now());
+  const secondaryAuth=secondaryApp.auth();
+  secondaryAuth.createUserWithEmailAndPassword(email,pass).then(cred=>{
+    const uid=cred.user.uid;
+    return db.ref('users/'+uid).set({name,email,role,station:String(station),createdAt:new Date().toISOString(),createdBy:userProfile?.name||currentUser.email});
+  }).then(()=>{
+    secondaryAuth.signOut();secondaryApp.delete();
+    logAudit('USER_CREATED',`Created ${role}: ${name} (${email})`);
+    toast('✓ User created!');
+    document.getElementById('u-name').value='';document.getElementById('u-email').value='';document.getElementById('u-pass').value='';
+    renderUsers();
+  }).catch(e=>{err.textContent=e.message;secondaryApp.delete();});
+}
+
+function renderUsers(){
+  db.ref('users').once('value',snap=>{
+    const users=Object.entries(snap.val()||{}).map(([uid,v])=>({...v,uid}));
+    const tbody=document.getElementById('users-tbody');
+    if(!users.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No users yet</td></tr>';return;}
+    tbody.innerHTML=users.map(u=>`<tr>
+      <td style="font-weight:500">${esc(u.name)}<div style="font-size:11px;color:var(--muted)">${esc(u.email)}</div></td>
+      <td><span class="badge ${u.role}">${u.role||'employee'}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${u.station==='all'?'All':'STN '+esc(u.station)}</td>
+      <td style="font-size:11px;color:var(--muted)">${u.lastLogin?new Date(u.lastLogin).toLocaleDateString('en-GB'):u.createdAt?new Date(u.createdAt).toLocaleDateString('en-GB'):'—'}</td>
+      <td>${u.uid!==currentUser?.uid?`<button class="btn btn-danger" style="padding:3px 8px;font-size:11px" onclick="removeUser('${u.uid}','${esc(u.name)}')">Remove</button>`:''}</td>
+    </tr>`).join('');
+  });
+}
+
+function removeUser(uid,name){
+  showModal('Remove User',`Remove <strong>${name}</strong> from the system? They will no longer be able to log in.`,()=>{
+    db.ref('users/'+uid).remove().then(()=>{
+      logAudit('USER_REMOVED','Removed user: '+name);
+      toast('User removed');renderUsers();
+    });
+  });
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+function renderAudit(){
+  const from=document.getElementById('audit-from').value;
+  const to=document.getElementById('audit-to').value;
+  const search=document.getElementById('audit-search').value.toLowerCase();
+  db.ref('audit').orderByChild('timestamp').limitToLast(200).once('value',snap=>{
+    let list=Object.values(snap.val()||{}).reverse();
+    if(from)list=list.filter(a=>a.timestamp>=from);
+    if(to)list=list.filter(a=>a.timestamp<=to+'T23:59:59');
+    if(search)list=list.filter(a=>(a.userName||'').toLowerCase().includes(search)||(a.action||'').toLowerCase().includes(search)||(a.details||'').toLowerCase().includes(search));
+    const tbody=document.getElementById('audit-tbody');
+    if(!list.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No audit records</td></tr>';return;}
+    tbody.innerHTML=list.map(a=>`<tr>
+      <td style="font-size:11px;color:var(--muted);white-space:nowrap">${new Date(a.timestamp).toLocaleString('en-GB')}</td>
+      <td style="font-weight:500;font-size:13px">${esc(a.userName||a.userId)}</td>
+      <td><span class="badge ${a.userRole||'employee'}">${a.userRole||'—'}</span></td>
+      <td style="font-size:12px;font-family:monospace;color:var(--blue)">${esc(a.action)}</td>
+      <td style="font-size:12px;color:var(--muted)">${esc(a.details)}</td>
+      <td style="font-size:12px">${a.station?'STN '+esc(a.station):'—'}</td>
+    </tr>`).join('');
+  });
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+function exportSwaps(){
+  db.ref('swaps').once('value',snap=>{
+    const list=Object.values(snap.val()||{});
+    if(!list.length){toast('No swaps to export','error');return;}
+    const headers=['Swap Date','Country','Station','Vehicle Reg','Vehicle Model','Customer','In Serial','In OEM','In Prev SOC','In Curr SOC','Out Serial','Out OEM','Out Curr SOC','Transaction ID','Discount','Net SOC','Billable SOC','Swap Cost','Station SOC','Station Cost','Pay Method','Performed By'];
+    const rows=[headers,...list.map(s=>[s.swapDate,s.country,s.station,s.vehicleReg,s.vehicleModel,s.customerName,s.inSerial,s.inOEM,s.inPrevSOC,s.inCurrSOC,s.outSerial,s.outOEM,s.outCurrSOC,s.transactionId,s.discount,s.netSOC,s.billableSOC,s.swapCost,s.stationSOC,s.stationCost,s.payMethod,s.performedBy])];
+    dlCSV(rows,'swaps_export_'+new Date().toISOString().split('T')[0]+'.csv');
+    logAudit('EXPORT','Exported swaps CSV');
+  });
+}
+function exportReport(){
+  const rows=[['Period','Station','Swaps','Revenue (RWF)','Expenses (RWF)','Net Profit (RWF)']];
+  document.querySelectorAll('#rpt-tbody tr').forEach(tr=>{
+    rows.push([...tr.querySelectorAll('td')].map(td=>td.textContent.trim()));
+  });
+  dlCSV(rows,'report_'+new Date().toISOString().split('T')[0]+'.csv');
+}
+function exportAudit(){
+  const rows=[['Timestamp','User','Role','Action','Details','Station']];
+  document.querySelectorAll('#audit-tbody tr').forEach(tr=>{
+    rows.push([...tr.querySelectorAll('td')].map(td=>td.textContent.trim()));
+  });
+  dlCSV(rows,'audit_'+new Date().toISOString().split('T')[0]+'.csv');
+}
+function dlCSV(rows,filename){
+  const csv=rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=filename;a.click();
+  toast('✓ CSV exported!');
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+let modalCb=null;
+function showModal(title,body,cb){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=body;
+  modalCb=cb;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('show');modalCb=null;}
+document.getElementById('modal-confirm-btn').onclick=()=>{if(modalCb)modalCb();closeModal();};
+document.getElementById('modal-overlay').onclick=e=>{if(e.target===document.getElementById('modal-overlay'))closeModal();};
+
+// Enter key on login
+document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
